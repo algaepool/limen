@@ -76,7 +76,14 @@ func (h *DatabaseActionHelper) CreateVerification(ctx context.Context, action, i
 		return nil, err
 	}
 
-	return h.FindVerificationByAction(ctx, action, identifier)
+	verification, err := h.FindVerificationByAction(ctx, action, identifier)
+	if err != nil {
+		return nil, err
+	}
+	// AlgaePool patch: the stored value is a one-way digest (HMAC-SHA256);
+	// the caller needs the original raw token for delivery, never the digest.
+	verification.Value = token
+	return verification, nil
 }
 
 func (h *DatabaseActionHelper) FindVerificationByAction(ctx context.Context, action, identifier string) (*Verification, error) {

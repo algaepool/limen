@@ -78,7 +78,9 @@ func (c *LimenCore) VerifyEmail(ctx context.Context, token string) (string, erro
 			return err
 		}
 
-		return c.DBAction.DeleteVerificationToken(ctx, verification.Value)
+		// AlgaePool patch: verification.Value holds the HMAC digest at rest;
+		// hashing it again would miss the row. Delete by the row's ID.
+		return c.DBAction.DeleteVerification(ctx, verification.ID)
 	})
 	if err != nil {
 		return "", err
