@@ -1,6 +1,8 @@
 package limen
 
 import (
+	"context"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -71,4 +73,24 @@ func TestNewUserBuildsUserFromColumnMap(t *testing.T) {
 	require.NotNil(t, user.Raw())
 	assert.Equal(t, "newuser@example.com", user.Raw()[emailField])
 	assert.Equal(t, "value", user.Raw()["custom"])
+}
+
+// CreateSession is the programmatic hook AlgaePool uses to issue sessions
+// inside its own Gin handlers (AUTH-05). The delegation must return a cookie
+// that follows the configured cookie policy without exposing LimenCore.
+func TestLimen_CreateSessionDelegation(t *testing.T) {
+	t.Parallel()
+
+	l := newTestLimen(t)
+	user := SeedTestUser(t, l, "session-delegation@example.com")
+
+	req := httptest.NewRequest("POST", "/api/v1/auth/signin/credential", nil)
+	result, err := l.CreateSession(context.Background(), req, &AuthenticationResult{User: user})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.NotEmpty(t, result.Token)
+	require.NotNil(t, result.Cookie)
+	assert.Equal(t, "limen_session", result.Cookie.Name)
+	assert.True(t, result.Cookie.HttpOnly)
 }

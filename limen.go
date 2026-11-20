@@ -130,6 +130,14 @@ func (a *Limen) GetSession(req *http.Request) (*ValidatedSession, error) {
 	return a.core.SessionManager.ValidateSession(req.Context(), req)
 }
 
+// CreateSession issues a new opaque server-side session for an already
+// authenticated user. It delegates to the configured SessionManager so plugins
+// and store policy remain authoritative. The returned SessionResult carries the
+// cookie that must be sent to the client.
+func (a *Limen) CreateSession(ctx context.Context, r *http.Request, auth *AuthenticationResult, opts ...SessionCreateOption) (*SessionResult, error) {
+	return a.core.SessionManager.CreateSession(ctx, r, auth, opts...)
+}
+
 // RevokeSession revokes a single session identified by its token.
 func (a *Limen) RevokeSession(ctx context.Context, token string) error {
 	return a.core.SessionManager.RevokeSession(ctx, token)
